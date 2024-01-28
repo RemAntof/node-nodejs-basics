@@ -1,27 +1,36 @@
-import fs from 'fs';
+import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
 const copy = async () => {
     const sourceFolder = path.join(__dirname, 'files');
     const destinationFolder = path.join(__dirname, 'files_copy');
-    if (fs.existsSync(destinationFolder)) {
+
+    try {
+        await fs.access(destinationFolder);
         throw new Error('FS operation failed: Destination folder already exists');
-    }
-    fs.mkdir(destinationFolder, (err) => {
-        if (err) {
+    } catch (err) {
+        if (err.code !== 'ENOENT') {
             throw err;
         }
-        const files = fs.readdirSync(sourceFolder);
-        files.forEach((file) => {
-            const sourceFilePath = path.join(sourceFolder, file);
-            const destinationFilePath = path.join(destinationFolder, file);
-            fs.copyFileSync(sourceFilePath, destinationFilePath);
-        });
-    console.log('Files copied successfully!');
+    }
 
-});
-}
-await copy();
+    await fs.mkdir(destinationFolder);
+
+    const files = await fs.readdir(sourceFolder);
+    
+    await Promise.all(files.map(async (file) => {
+        const sourceFilePath = path.join(sourceFolder, file);
+        const destinationFilePath = path.join(destinationFolder, file);
+
+        await fs.copyFile(sourceFilePath, destinationFilePath);
+    }));
+
+    console.log('Files copied successfully!');
+};
+
+    await copy();
+
