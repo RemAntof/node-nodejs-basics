@@ -13,7 +13,7 @@ const remove = async () => {
         throw new Error('FS operation failed: File does not exist');
     }
 
-    fs.unlinkSync(filePath);
+    fs.unlink(filePath);
 
     console.log('File deleted successfully!');
 };
